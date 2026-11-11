@@ -34,6 +34,7 @@ function createApp(userAgent, startError) {
             createElement: () => ({ classList: { add() {} } }),
         },
         URLSearchParams,
+        TextEncoder,
         fetch: async (url) => {
             requests.push(new URL(url));
             return { ok: true, json: async () => ({
@@ -172,4 +173,44 @@ test('page supplies an accessible status and labelled single-utterance control',
     const html = readFileSync(require('node:path').join(__dirname, '../index.html'), 'utf8');
     assert.match(html, /<p id="recognition-status" role="status">/);
     assert.match(html, /<label><input id="single-utterance" type="checkbox"> Use one phrase per tap/);
+});
+
+for (const [name, word] of [
+    ['ASCII', 'a'.repeat(500)],
+    ['accented Spanish', 'á'.repeat(250)],
+    ['supplementary Unicode', '😀'.repeat(125)],
+]) {
+    test(`${name} translation chunks respect the 500-byte boundary`, async () => {
+        const app = createApp('Android');
+        app.buttons['start-spanish'].onclick();
+        const transcript = `${word} hola`;
+        app.sessions[0].onresult({ resultIndex: 0, results: [result(transcript, true)] });
+        await new Promise(setImmediate);
+        const chunks = app.requests.map((url) => url.searchParams.get('q'));
+        assert.deepEqual(chunks, [word, 'hola']);
+        assert.equal(chunks.join(' '), transcript);
+        assert.equal(Buffer.byteLength(chunks[0], 'utf8'), 500);
+        assert.ok(chunks.every((chunk) => Buffer.byteLength(chunk, 'utf8') <= 500));
+        assert.ok(app.requests.every((url) => url.searchParams.get('langpair') === 'es|en'));
+        assert.equal(app.messages[1].textContent, 'Translation: translated translated');
+    });
+}
+
+test('Spanish chunk sizing includes separator bytes', async () => {
+    const app = createApp('Android');
+    app.buttons['start-spanish'].onclick();
+    const word = 'ñ'.repeat(249);
+    app.sessions[0].onresult({ resultIndex: 0, results: [result(`${word} a b`, true)] });
+    await new Promise(setImmediate);
+    assert.deepEqual(app.requests.map((url) => url.searchParams.get('q')), [`${word} a`, 'b']);
+});
+
+test('a word over the byte limit shows an error without sending requests', async () => {
+    const app = createApp('Android');
+    app.buttons['start-spanish'].onclick();
+    app.sessions[0].onresult({ resultIndex: 0, results: [result('á'.repeat(251), true)] });
+    await new Promise(setImmediate);
+    assert.equal(app.requests.length, 0);
+    assert.equal(app.messages[1].textContent,
+        'Translation unavailable: A word is too long to send to the translation service.');
 });

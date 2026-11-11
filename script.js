@@ -2,7 +2,7 @@ const chatWindow = document.getElementById('chat-window');
 const recognitionStatus = document.getElementById('recognition-status');
 const singleUtteranceMode = document.getElementById('single-utterance');
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const MAX_TRANSLATION_CHARS = 500;
+const MAX_TRANSLATION_BYTES = 500;
 let activeRecognition = null;
 
 /**
@@ -23,20 +23,21 @@ function appendMessage(className, text) {
 /**
  * Split text at whitespace into chunks within the translation service limit.
  * @param {string} text Transcript to split.
- * @returns {string[]} Nonempty chunks of at most MAX_TRANSLATION_CHARS characters.
+ * @returns {string[]} Nonempty chunks of at most MAX_TRANSLATION_BYTES UTF-8 bytes.
  * @throws {Error} If a single word exceeds the service limit.
  */
 function splitForTranslation(text) {
+    const encoder = new TextEncoder();
     const words = text.match(/\S+/g) || [];
     const chunks = [];
     let chunk = '';
 
     for (const word of words) {
-        if (word.length > MAX_TRANSLATION_CHARS) {
+        if (encoder.encode(word).length > MAX_TRANSLATION_BYTES) {
             throw new Error('A word is too long to send to the translation service.');
         }
         const candidate = chunk ? `${chunk} ${word}` : word;
-        if (candidate.length > MAX_TRANSLATION_CHARS) {
+        if (encoder.encode(candidate).length > MAX_TRANSLATION_BYTES) {
             chunks.push(chunk);
             chunk = word;
         } else {
@@ -50,7 +51,7 @@ function splitForTranslation(text) {
 
 /**
  * Request one translation chunk and reject unsuccessful or empty responses.
- * @param {string} text Text within the translation service character limit.
+ * @param {string} text Text within the translation service UTF-8 byte limit.
  * @param {string} source Source language code.
  * @param {string} target Target language code.
  * @returns {Promise<string>} Translated text.
