@@ -104,8 +104,11 @@ function startRecognition(langCode, className) {
 
     const recognition = new SpeechRecognition();
     activeRecognition = recognition;
-    recognition.continuous = true;
-    recognition.interimResults = true;
+    // Android continuous recognition can report partial phrases as final results.
+    // Request a single utterance without partial updates on that platform.
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    recognition.continuous = !isAndroid;
+    recognition.interimResults = !isAndroid;
     recognition.lang = langCode;
 
     recognition.onend = () => {
