@@ -1,39 +1,53 @@
-#app { 
-    max-width: 600px; 
-    margin: auto; 
-    padding: 20px; 
-    font-family: sans-serif; 
+#app {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+    font-family: sans-serif;
 }
 
-#chat-window { 
-    height: 400px; 
-    border: 1px solid #ccc; 
-    overflow-y: scroll; 
-    padding: 10px; 
-    margin-bottom: 10px; 
+#chat-window {
+    height: 400px;
+    border: 1px solid #ccc;
+    overflow-y: scroll;
+    padding: 10px;
+    margin-bottom: 10px;
     border-radius: 8px;
     background-color: #fafafa;
 }
 
-.message { 
-    margin: 10px 0; 
-    padding: 8px; 
-    border-radius: 5px; 
+.message {
+    margin: 10px 0;
+    padding: 8px;
+    border-radius: 5px;
 }
 
-.english { 
-    background-color: #e3f2fd; 
-    text-align: left; 
+.english {
+    background-color: #e3f2fd;
+    text-align: left;
 }
 
-.spanish { 
-    background-color: #f1f8e9; 
-    text-align: right; 
+.spanish {
+    background-color: #f1f8e9;
+    text-align: right;
 }
 
-.controls { 
-    display: flex; 
-    gap: 10px; 
+.translation {
+    color: #333;
+    font-style: italic;
+}
+
+.translation.error {
+    color: #a00000;
+}
+
+.privacy-note {
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
 }
 
 button {

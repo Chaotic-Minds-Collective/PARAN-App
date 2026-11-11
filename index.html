@@ -2,16 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PARAN - Real-Time Translation</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="app">
-        <div id="chat-window"></div>
+        <div id="chat-window" role="region" aria-live="polite" aria-label="Conversation"></div>
+        <p class="privacy-note" lang="en">Browser speech recognition may send microphone audio to a speech recognition service, including audio that never becomes a finalized transcript. Finalized transcript text is sent to MyMemory for translation. Do not use this app for sensitive conversations.</p>
+        <p class="privacy-note" lang="es-CO">El reconocimiento de voz del navegador puede enviar el audio del micrófono a un servicio de reconocimiento de voz, incluido el audio que nunca se convierte en una transcripción definitiva. El texto de las transcripciones definitivas se envía a MyMemory para su traducción. No uses esta aplicación para conversaciones sensibles.</p>
         <div class="controls">
-            <button id="start-english">Speak (English)</button>
-            <button id="start-spanish">Speak (Colombian Spanish)</button>
+            <button id="start-english" type="button">Speak (English)</button>
+            <button id="start-spanish" type="button">Speak (Colombian Spanish)</button>
         </div>
+        <p><label><input id="single-utterance" type="checkbox"> Use one phrase per tap (try this if speech repeats).</label> Tap a language button to apply.</p>
+        <p id="recognition-status" role="status">Tap a language button to start listening.</p>
     </div>
     <script src="script.js"></script>
 </body>
