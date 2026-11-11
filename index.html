@@ -2,15 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PARAN - Real-Time Translation</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="app">
-        <div id="chat-window"></div>
+        <div id="chat-window" aria-live="polite" aria-label="Conversation"></div>
+        <p class="privacy-note">Speech recognition uses your browser. Transcript text is sent to MyMemory for translation.</p>
         <div class="controls">
-            <button id="start-english">Speak (English)</button>
-            <button id="start-spanish">Speak (Colombian Spanish)</button>
+            <button id="start-english" type="button">Speak (English)</button>
+            <button id="start-spanish" type="button">Speak (Colombian Spanish)</button>
         </div>
     </div>
     <script src="script.js"></script>
