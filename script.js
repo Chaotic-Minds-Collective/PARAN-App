@@ -1,7 +1,14 @@
 const chatWindow = document.getElementById('chat-window');
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const MAX_TRANSLATION_CHARS = 500;
+let activeRecognition = null;
 
+/**
+ * Append a plain-text conversation message and return its DOM element.
+ * @param {string} className CSS classes identifying the message type.
+ * @param {string} text Message content.
+ * @returns {HTMLDivElement} The appended message.
+ */
 function appendMessage(className, text) {
     const div = document.createElement('div');
     div.className = `message ${className}`;
@@ -11,6 +18,12 @@ function appendMessage(className, text) {
     return div;
 }
 
+/**
+ * Split text at whitespace into chunks within the translation service limit.
+ * @param {string} text Transcript to split.
+ * @returns {string[]} Nonempty chunks of at most MAX_TRANSLATION_CHARS characters.
+ * @throws {Error} If a single word exceeds the service limit.
+ */
 function splitForTranslation(text) {
     const words = text.match(/\S+/g) || [];
     const chunks = [];
@@ -33,6 +46,14 @@ function splitForTranslation(text) {
     return chunks;
 }
 
+/**
+ * Request one translation chunk and reject unsuccessful or empty responses.
+ * @param {string} text Text within the translation service character limit.
+ * @param {string} source Source language code.
+ * @param {string} target Target language code.
+ * @returns {Promise<string>} Translated text.
+ * @throws {Error} If the request fails or the service returns an invalid result.
+ */
 async function translateChunk(text, source, target) {
     const query = new URLSearchParams({ q: text, langpair: `${source}|${target}` });
     const response = await fetch(`https://api.mymemory.translated.net/get?${query}`);
@@ -48,6 +69,13 @@ async function translateChunk(text, source, target) {
     return translation;
 }
 
+/**
+ * Translate a transcript in parallel chunks, preserving their original order.
+ * @param {string} text Transcript to translate.
+ * @param {string} source Source language code.
+ * @param {string} target Target language code.
+ * @returns {Promise<string>} Joined translations; rejects if any chunk fails.
+ */
 async function translateText(text, source, target) {
     const chunks = splitForTranslation(text);
     const translatedChunks = await Promise.all(
@@ -56,22 +84,41 @@ async function translateText(text, source, target) {
     return translatedChunks.join(' ');
 }
 
+/**
+ * Replace the active speech session and translate each finalized transcript.
+ * @param {string} langCode Browser speech recognition locale.
+ * @param {string} className Conversation speaker class (english or spanish).
+ * @returns {void}
+ */
 function startRecognition(langCode, className) {
     if (!SpeechRecognition) {
         appendMessage('translation error', 'Speech recognition is not supported in this browser.');
         return;
     }
 
+    if (activeRecognition) {
+        const previousRecognition = activeRecognition;
+        activeRecognition = null;
+        previousRecognition.abort();
+    }
+
     const recognition = new SpeechRecognition();
+    activeRecognition = recognition;
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = langCode;
 
+    recognition.onend = () => {
+        if (activeRecognition === recognition) activeRecognition = null;
+    };
+
     recognition.onerror = (event) => {
+        if (activeRecognition !== recognition) return;
         appendMessage('translation error', `Speech recognition failed: ${event.error}.`);
     };
 
     recognition.onresult = (event) => {
+        if (activeRecognition !== recognition) return;
         for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (!event.results[i].isFinal) continue;
 
@@ -94,7 +141,12 @@ function startRecognition(langCode, className) {
         }
     };
 
-    recognition.start();
+    try {
+        recognition.start();
+    } catch (error) {
+        if (activeRecognition === recognition) activeRecognition = null;
+        appendMessage('translation error', `Speech recognition failed: ${error.message}.`);
+    }
 }
 
 document.getElementById('start-english').onclick = () => startRecognition('en-US', 'english');
