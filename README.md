@@ -6,7 +6,13 @@ Mobile-first, real-time, two-way speech translation for English and Colombian Sp
 
 <!-- coderabbit-ai-generated-section:v1:a2e46af9c6a7c7f9e5a80ec661ae3e78702f3b9fada91d23e9f389388aabc796 -->
 
-On Android, recognition captures one utterance per button press to avoid browsers reporting incremental phrases as final in continuous mode. Tap the language button again for the next phrase. Other platforms use continuous recognition.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:e58a1b3733c992b8bcbcdeb9b2fdc990cd6be9166e61901255ba922ef9faa274 -->
+
+On Android, recognition captures one utterance per button press to avoid browsers reporting incremental phrases as final in continuous mode. Tap the language button again for the next phrase. Other platforms use continuous recognition. If your browser uses a desktop identity or repeats phrases, select “Use one phrase per tap” before tapping a language button. The listening status shows when recognition starts and ends.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 <!-- /coderabbit-ai-generated:v1 -->
 

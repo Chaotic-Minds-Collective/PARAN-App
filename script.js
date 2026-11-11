@@ -1,4 +1,6 @@
 const chatWindow = document.getElementById('chat-window');
+const recognitionStatus = document.getElementById('recognition-status');
+const singleUtteranceMode = document.getElementById('single-utterance');
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const MAX_TRANSLATION_CHARS = 500;
 let activeRecognition = null;
@@ -106,20 +108,44 @@ function startRecognition(langCode, className) {
     activeRecognition = recognition;
     // Android continuous recognition can report partial phrases as final results.
     // Request a single utterance without partial updates on that platform.
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    recognition.continuous = !isAndroid;
-    recognition.interimResults = !isAndroid;
+    const singleUtterance = /Android/i.test(navigator.userAgent) || singleUtteranceMode.checked;
+    recognition.continuous = !singleUtterance;
+    recognition.interimResults = !singleUtterance;
     recognition.lang = langCode;
+    let recognitionFailed = false;
 
-    recognition.onend = () => {
-        if (activeRecognition === recognition) activeRecognition = null;
+    /** Show listening only after the active recognizer has actually started. */
+    recognition.onstart = () => {
+        if (activeRecognition !== recognition) return;
+        recognitionStatus.textContent = singleUtterance
+            ? 'Listening for one phrase…'
+            : 'Listening…';
     };
 
+    /** Clear the active session and retain error feedback when recognition failed. */
+    recognition.onend = () => {
+        if (activeRecognition !== recognition) return;
+        activeRecognition = null;
+        if (!recognitionFailed) {
+            recognitionStatus.textContent = 'Listening ended. Tap a language button to speak again.';
+        }
+    };
+
+    /**
+     * Report an active recognition failure without accepting stale session errors.
+     * @param {SpeechRecognitionErrorEvent} event Browser recognition failure.
+     */
     recognition.onerror = (event) => {
         if (activeRecognition !== recognition) return;
+        recognitionFailed = true;
+        recognitionStatus.textContent = 'Listening stopped. Tap a language button to try again.';
         appendMessage('translation error', `Speech recognition failed: ${event.error}.`);
     };
 
+    /**
+     * Display and translate finalized results from the active session.
+     * @param {SpeechRecognitionEvent} event Browser recognition results.
+     */
     recognition.onresult = (event) => {
         if (activeRecognition !== recognition) return;
         for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -145,9 +171,11 @@ function startRecognition(langCode, className) {
     };
 
     try {
+        recognitionStatus.textContent = 'Starting microphone…';
         recognition.start();
     } catch (error) {
         if (activeRecognition === recognition) activeRecognition = null;
+        recognitionStatus.textContent = 'Listening could not start. Tap a language button to try again.';
         appendMessage('translation error', `Speech recognition failed: ${error.message}.`);
     }
 }
