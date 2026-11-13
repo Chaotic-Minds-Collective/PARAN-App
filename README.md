@@ -1,4 +1,7 @@
-# PARAN-App
+# CMC PARAN App
+
+A Chaotic Minds Collective mobile-first speech translation application for English and Colombian Spanish.
+
 
 Mobile-first, real-time, two-way speech translation for English and Colombian Spanish speakers. The browser's speech recognition captures each finalized utterance, and the app translates it between English and Spanish with the MyMemory translation API.
 
